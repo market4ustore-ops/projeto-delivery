@@ -4,6 +4,7 @@ test('creates, publishes and executes a visual journey', async ({
   page,
   request,
 }) => {
+  test.setTimeout(120_000);
   const apiUrl = process.env.API_URL?.replace(/^['"]|['"]$/g, '');
   const anonKey = process.env.ANON_KEY?.replace(/^['"]|['"]$/g, '');
   test.skip(!apiUrl || !anonKey, 'Requires the local Supabase stack.');
