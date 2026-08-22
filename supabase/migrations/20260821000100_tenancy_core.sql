@@ -173,7 +173,8 @@ declare new_id uuid;
 begin
   if not public.has_permission(target_organization_id, 'location.update') then raise exception 'permission denied' using errcode = '42501'; end if;
   if char_length(btrim(location_name)) not between 2 and 120 then raise exception 'invalid location name' using errcode = '22023'; end if;
-  insert into public.locations(organization_id, name) values (target_organization_id, btrim(location_name)) returning id into new_id;
+  new_id := gen_random_uuid();
+  insert into public.locations(id, organization_id, name) values (new_id, target_organization_id, btrim(location_name));
   return new_id;
 end;
 $$;

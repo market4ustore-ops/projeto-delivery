@@ -50,6 +50,10 @@ As operações expostas pela UI usam RPCs pequenas. `create_organization` cria a
 - Varredura de secrets: nenhum segredo encontrado.
 - `pnpm test:rls`: não executado localmente porque não havia PostgreSQL/Supabase local ativo; a máquina não possuía Docker disponível. O job RLS foi preparado na CI.
 
+### Validação na CI
+
+A primeira execução real no GitHub Actions aplicou a migration corretamente e executou os 15 testes. Treze passaram; os testes de criação autorizada de Location falharam porque `INSERT ... RETURNING` também exigia visibilidade da nova linha pela policy de leitura no mesmo statement. A RPC foi corrigida para gerar o UUID antes do insert e retornar a variável separadamente, preservando a policy de criação e evitando acoplar o comando à policy de leitura.
+
 ## Limitações e débitos adiados
 
 - A migration e os 15 testes pgTAP ainda precisam ser executados contra Supabase local real.
