@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { CheckoutSheet } from './checkout-sheet';
 type Product = {
   id: string;
   name: string;
@@ -87,6 +88,7 @@ function Renderer({
   onAction,
   onProduct,
   onCart,
+  onCheckout,
 }: {
   render: Render;
   busy: boolean;
@@ -95,6 +97,7 @@ function Renderer({
   ) => void;
   onProduct: (p: Product) => void;
   onCart: () => void;
+  onCheckout: () => void;
 }) {
   if (render.type === 'TEXT')
     return (
@@ -167,6 +170,8 @@ function Renderer({
         <h1>{render.boundary}</h1>
         {render.boundary === 'CART' ? (
           <button onClick={onCart}>Abrir carrinho</button>
+        ) : render.boundary === 'CHECKOUT' ? (
+          <button onClick={onCheckout}>Revisar pedido</button>
         ) : (
           <p>Esta etapa será implementada futuramente.</p>
         )}
@@ -198,6 +203,7 @@ export function PublicFlow({
     [options, setOptions] = useState<string[]>([]),
     [quantity, setQuantity] = useState(1),
     [cartOpen, setCartOpen] = useState(false),
+    [checkoutOpen, setCheckoutOpen] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [sessionExpired, setSessionExpired] = useState(false);
@@ -338,6 +344,7 @@ export function PublicFlow({
             onAction={(a) => void advance(a)}
             onProduct={(p) => void openProduct(p)}
             onCart={() => setCartOpen(true)}
+            onCheckout={() => setCheckoutOpen(true)}
           />
         )}
         <p role="alert">{error}</p>
@@ -514,9 +521,27 @@ export function PublicFlow({
               </article>
             ))}
             <h3>Subtotal: {money(cart.subtotal)}</h3>
-            <button disabled>Continuar (em breve)</button>
+            <button
+              onClick={() => {
+                setCartOpen(false);
+                setCheckoutOpen(true);
+              }}
+              disabled={cart.items.length === 0}
+            >
+              Continuar para checkout
+            </button>
           </section>
         </div>
+      )}
+      {checkoutOpen && cart && (
+        <CheckoutSheet
+          cartToken={cartToken}
+          onClose={() => setCheckoutOpen(false)}
+          onBackToCart={() => {
+            setCheckoutOpen(false);
+            setCartOpen(true);
+          }}
+        />
       )}
     </main>
   );

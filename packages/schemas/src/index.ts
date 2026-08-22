@@ -244,3 +244,39 @@ export const publicCartMutationSchema = z.object({
     z.object({ type: z.literal('REMOVE'), itemId: uuid }),
   ]),
 });
+
+const checkoutToken = z.string().regex(/^[a-f0-9]{64}$/);
+const checkoutAddressSchema = z.object({
+  postalCode: z.string().min(8).max(10),
+  street: z.string().trim().min(2).max(160),
+  number: z.string().trim().min(1).max(20),
+  complement: z.string().trim().max(120).optional(),
+  neighborhood: z.string().trim().min(2).max(120),
+  city: z.string().trim().min(2).max(120),
+  state: z.string().trim().length(2),
+  reference: z.string().trim().max(160).optional(),
+});
+export const publicCheckoutStartSchema = z.object({
+  cartToken: checkoutToken,
+  idempotencyKey: uuid,
+});
+export const publicCheckoutTokenSchema = z.object({ cartToken: checkoutToken });
+export const publicCheckoutMutationSchema = z.object({
+  cartToken: checkoutToken,
+  expectedRevision: z.number().int().min(0),
+  idempotencyKey: uuid,
+  action: z.discriminatedUnion('type', [
+    z.object({
+      type: z.literal('CUSTOMER'),
+      name: z.string().trim().min(2).max(120),
+      phone: z.string().trim().min(8).max(24),
+    }),
+    z.object({
+      type: z.literal('FULFILLMENT'),
+      fulfillmentType: z.enum(['DELIVERY', 'PICKUP']),
+    }),
+    z.object({ type: z.literal('ADDRESS'), address: checkoutAddressSchema }),
+    z.object({ type: z.literal('VALIDATE') }),
+    z.object({ type: z.literal('CANCEL') }),
+  ]),
+});

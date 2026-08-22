@@ -15,3 +15,4 @@ Registros:
 - [2026-08-22 — Catalog](2026-08-22-catalog.md)
 - [2026-08-22 — Flow Builder visual](2026-08-22-flow-builder.md)
 - [2026-08-22 — Cart + Product Configuration](2026-08-22-cart-product-configuration.md)
+- [2026-08-22 — Checkout](2026-08-22-checkout.md)

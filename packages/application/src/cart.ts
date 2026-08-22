@@ -12,9 +12,7 @@ export type CartMutationInput = Omit<
   'basePrice' | 'available'
 > & { expectedRevision: number; idempotencyKey: string; itemId?: string };
 export interface CartCommandPort {
-  loadPricing(
-    productId: string,
-  ): Promise<{
+  loadPricing(productId: string): Promise<{
     basePrice: Money;
     available: boolean;
     variants: PricingVariant[];
