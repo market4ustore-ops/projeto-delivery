@@ -1,4 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
+const cleanEnvironmentValue = (value?: string) =>
+  value?.replace(/^['"]|['"]$/g, '') ?? '';
+const apiUrl = cleanEnvironmentValue(process.env.API_URL);
+const anonKey = cleanEnvironmentValue(process.env.ANON_KEY);
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -16,8 +20,8 @@ export default defineConfig({
       timeout: 120000,
       env: {
         ...process.env,
-        SUPABASE_URL: process.env.API_URL ?? '',
-        SUPABASE_ANON_KEY: process.env.ANON_KEY ?? '',
+        SUPABASE_URL: apiUrl,
+        SUPABASE_ANON_KEY: anonKey,
       },
     },
     {
@@ -27,8 +31,8 @@ export default defineConfig({
       timeout: 120000,
       env: {
         ...process.env,
-        NEXT_PUBLIC_SUPABASE_URL: process.env.API_URL ?? '',
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.ANON_KEY ?? '',
+        NEXT_PUBLIC_SUPABASE_URL: apiUrl,
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: anonKey,
       },
     },
   ],

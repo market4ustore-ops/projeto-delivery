@@ -4,8 +4,8 @@ test('creates, publishes and executes a visual journey', async ({
   page,
   request,
 }) => {
-  const apiUrl = process.env.API_URL;
-  const anonKey = process.env.ANON_KEY;
+  const apiUrl = process.env.API_URL?.replace(/^['"]|['"]$/g, '');
+  const anonKey = process.env.ANON_KEY?.replace(/^['"]|['"]$/g, '');
   test.skip(!apiUrl || !anonKey, 'Requires the local Supabase stack.');
   const email = `builder-${Date.now()}@test.local`;
   const password = 'FlowBuilder123!';
