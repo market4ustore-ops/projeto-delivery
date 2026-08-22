@@ -280,3 +280,38 @@ export const publicCheckoutMutationSchema = z.object({
     z.object({ type: z.literal('CANCEL') }),
   ]),
 });
+export const createOrderFromCheckoutSchema = z.object({
+  cartToken: checkoutToken,
+  idempotencyKey: uuid,
+});
+export const publicOrderStatusSchema = z.object({ cartToken: checkoutToken });
+export const updateOrderStatusSchema = z.object({
+  orderId: uuid,
+  expectedRevision: z.number().int().min(0),
+  status: z.enum([
+    'CONFIRMED',
+    'PREPARING',
+    'READY',
+    'OUT_FOR_DELIVERY',
+    'DELIVERED',
+    'CANCELED',
+  ]),
+  reason: z.string().trim().max(240).optional(),
+});
+
+export const adminOrdersSchema = z.array(
+  z.object({
+    id: uuid,
+    displayNumber: z.string(),
+    status: z.string(),
+    revision: z.number().int(),
+    total: z.string(),
+    fulfillmentType: z.string(),
+    items: z.array(
+      z.object({ id: uuid, name: z.string(), quantity: z.number().int() }),
+    ),
+    timeline: z.array(
+      z.object({ eventType: z.string(), createdAt: z.string() }),
+    ),
+  }),
+);

@@ -116,6 +116,17 @@ export const createFlowGateway = (client: BrowserDatabaseClient) => ({
   publish: (versionId: string) =>
     client.rpc('publish_flow_version', { target_version_id: versionId }),
 });
+export const createOrderGateway = (client: BrowserDatabaseClient) => ({
+  list: (locationId: string) =>
+    client.rpc('list_orders', { target_location_id: locationId }),
+  updateStatus: (orderId: string, expectedRevision: number, status: string) =>
+    client.rpc('update_order_status', {
+      target_order_id: orderId,
+      expected_revision: expectedRevision,
+      target_status: status,
+      target_reason: null,
+    }),
+});
 
 export const createFlowRuntimeGateway = (client: BrowserDatabaseClient) => ({
   findPublished: async (locationId: string, slug: string) =>

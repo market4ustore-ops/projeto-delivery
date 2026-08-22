@@ -2,7 +2,8 @@
 import { useState } from 'react';
 type Item = {
   id: string;
-  productName: string;
+  productName?: string;
+  name?: string;
   variantName?: string | null;
   quantity: number;
   unitPrice: string;
@@ -22,6 +23,16 @@ type Checkout = {
   cartRevisionValidated?: number | null;
   items: Item[];
 };
+type PublicOrder = {
+  displayNumber: string;
+  status: string;
+  fulfillmentType: string;
+  subtotal: string;
+  deliveryFee: string;
+  total: string;
+  createdAt: string;
+  items: Item[];
+};
 const money = (value: string) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
     Number(value),
@@ -36,6 +47,7 @@ export function CheckoutSheet({
   onBackToCart: () => void;
 }) {
   const [checkout, setCheckout] = useState<Checkout | null>(null),
+    [order, setOrder] = useState<PublicOrder | null>(null),
     [step, setStep] = useState<
       'FULFILLMENT' | 'CUSTOMER' | 'ADDRESS' | 'REVIEW'
     >('FULFILLMENT'),
@@ -139,6 +151,68 @@ export function CheckoutSheet({
     const next = await mutate({ type: 'ADDRESS', address });
     if (next) setStep('REVIEW');
   }
+  async function confirmOrder() {
+    setBusy(true);
+    setError('');
+    try {
+      const r = await fetch('/api/public/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cartToken,
+          idempotencyKey: crypto.randomUUID(),
+        }),
+      });
+      const data = (await r.json()) as PublicOrder & { error?: string };
+      if (!r.ok) throw new Error(data.error);
+      setOrder(data);
+    } catch (e) {
+      setError(
+        e instanceof Error && e.message === 'CHECKOUT_STALE'
+          ? 'O carrinho mudou. Revise o checkout novamente.'
+          : 'Não foi possível confirmar o pedido.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function refreshOrder() {
+    const r = await fetch(`/api/public/orders?token=${cartToken}`);
+    if (r.ok) setOrder((await r.json()) as PublicOrder);
+  }
+  if (order)
+    return (
+      <div
+        className="sheet-backdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Pedido confirmado"
+      >
+        <section className="sheet">
+          <button className="secondary" onClick={onClose}>
+            Fechar
+          </button>
+          <h2>Pedido #{order.displayNumber}</h2>
+          <p role="status">Pedido confirmado</p>
+          <p>
+            Status atual: <strong>{order.status}</strong>
+          </p>
+          {order.items.map((i) => (
+            <article className="cart-item" key={i.id}>
+              <strong>{i.productName ?? i.name}</strong>
+              <span>
+                {i.quantity} × {money(i.unitPrice)}
+              </span>
+            </article>
+          ))}
+          <h3>Total: {money(order.total)}</h3>
+          <p>{order.fulfillmentType === 'DELIVERY' ? 'Entrega' : 'Retirada'}</p>
+          <button className="secondary" onClick={() => void refreshOrder()}>
+            Atualizar status
+          </button>
+        </section>
+      </div>
+    );
   return (
     <div
       className="sheet-backdrop"
@@ -264,11 +338,14 @@ export function CheckoutSheet({
                 </p>
                 {checkout.status === 'READY' ? (
                   <>
-                    <p role="status">Pronto para a futura criação do pedido.</p>
+                    <p role="status">Pronto para confirmar o pedido.</p>
                     {checkout.cartRevisionValidated !==
                       checkout.cartRevision && (
                       <p role="alert">O carrinho mudou. Valide novamente.</p>
                     )}
+                    <button disabled={busy} onClick={() => void confirmOrder()}>
+                      Confirmar pedido
+                    </button>
                   </>
                 ) : (
                   <button

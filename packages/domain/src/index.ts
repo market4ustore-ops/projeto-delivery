@@ -6,3 +6,4 @@ export * from './flows.js';
 export * from './flow-runtime.js';
 export * from './cart.js';
 export * from './checkout.js';
+export * from './orders.js';

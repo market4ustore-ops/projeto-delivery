@@ -211,14 +211,25 @@ test('creates, publishes and executes a visual journey', async ({
     page.getByRole('heading', { name: 'Checkout pronto' }),
   ).toBeVisible();
   await checkoutDialog
-    .getByRole('button', { name: 'Voltar ao carrinho' })
+    .getByRole('button', { name: 'Confirmar pedido' })
     .click();
-  await page.getByRole('button', { name: '+' }).click();
-  await page.getByRole('button', { name: 'Continuar para checkout' }).click();
+  await expect(checkoutDialog.getByText('Pedido confirmado')).toBeVisible();
+  await expect(checkoutDialog.getByText('CONFIRMED')).toBeVisible();
+
+  const adminPage = await page.context().newPage();
+  await adminPage.goto('http://127.0.0.1:3000');
+  await adminPage.getByLabel('Organização ativa').selectOption(organizationId);
+  await adminPage.getByRole('button', { name: 'Unidade Centro' }).click();
+  const ordersPanel = adminPage.getByTestId('orders-panel');
+  await expect(ordersPanel.getByText('Pedido #0001')).toBeVisible();
+  await ordersPanel.getByRole('button', { name: 'Iniciar preparo' }).click();
+  await expect(ordersPanel.getByText(/PREPARING/)).toBeVisible();
+  await adminPage.close();
+
   await checkoutDialog
-    .getByRole('button', { name: 'Iniciar checkout' })
+    .getByRole('button', { name: 'Atualizar status' })
     .click();
-  await expect(checkoutDialog.getByText('Entrega ou retirada')).toBeVisible();
+  await expect(checkoutDialog.getByText('PREPARING')).toBeVisible();
   await checkoutDialog.getByRole('button', { name: 'Fechar' }).click();
   await page.getByRole('button', { name: 'Continuar' }).click();
   await expect(page.getByText('Até logo!')).toBeVisible();

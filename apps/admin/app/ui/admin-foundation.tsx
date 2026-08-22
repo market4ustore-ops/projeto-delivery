@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { createBrowserDatabaseClient } from '@delivery/database';
 import { CatalogPanel } from './catalog-panel';
 import { FlowPanel } from './flow-panel';
+import { OrdersPanel } from './orders-panel';
 import {
   createLocationSchema,
   createOrganizationSchema,
@@ -215,6 +216,7 @@ export function AdminFoundation() {
         <>
           <CatalogPanel client={client} locationId={selectedLocation} />
           <FlowPanel client={client} locationId={selectedLocation} />
+          <OrdersPanel client={client} locationId={selectedLocation} />
         </>
       )}
     </section>
