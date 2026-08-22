@@ -149,3 +149,70 @@ export const advanceFlowSessionSchema = z.object({
     }),
   ]),
 });
+export const publicFlowStartSchema = z.object({
+  locationSlug: slug,
+  flowSlug: slug,
+});
+export const publicFlowAdvanceSchema = z.object({
+  publicToken: z.string().regex(/^[a-f0-9]{64}$/),
+  expectedRevision: z.number().int().min(0),
+  idempotencyKey: z.string().uuid(),
+  action: z.discriminatedUnion('type', [
+    z.object({ type: z.literal('CONTINUE') }),
+    z.object({
+      type: z.literal('SELECT_CHOICE'),
+      choiceKey: z.string().trim().min(1).max(80),
+    }),
+  ]),
+});
+export const publicFlowDefinitionSchema = z.object({
+  flowId: uuid,
+  versionId: uuid,
+  locationId: uuid,
+  schemaVersion: z.number().int().positive(),
+  nodes: z.array(
+    z.object({
+      id: uuid,
+      flowVersionId: uuid,
+      type: z.enum([
+        'START',
+        'TEXT',
+        'CHOICE',
+        'CATEGORY',
+        'PRODUCT_LIST',
+        'PRODUCT',
+        'UPSELL',
+        'CART',
+        'DELIVERY',
+        'CHECKOUT',
+        'END',
+      ]),
+      name: z.string().nullable().optional(),
+      config: flowNodeConfigSchema,
+    }),
+  ),
+  edges: z.array(
+    z.object({
+      id: uuid,
+      flowVersionId: uuid,
+      sourceNodeId: uuid,
+      targetNodeId: uuid,
+      condition: flowConditionSchema,
+      sortOrder: z.number().int(),
+    }),
+  ),
+  catalog: z.object({
+    categories: z.array(z.object({ id: uuid, name: z.string() })),
+    products: z.array(
+      z.object({
+        id: uuid,
+        name: z.string(),
+        price: z.string(),
+        categoryId: uuid,
+        available: z.boolean(),
+        description: z.string().nullable().optional(),
+        imageReference: z.string().nullable().optional(),
+      }),
+    ),
+  }),
+});

@@ -10,7 +10,7 @@ Requests de avanço podem ser repetidas ou concorrentes. O Storefront futuro ser
 
 Cada sessão possui `revision`. O avanço persiste por compare-and-swap sob lock de linha: a revisão esperada deve coincidir e é incrementada uma vez. Uma chave de idempotência é única por sessão e conserva a resposta original para retries. A sessão guarda somente hash SHA-256 de um token aleatório de 256 bits; o token puro é entregue apenas na criação.
 
-Nesta etapa não há acesso `anon`. Operações passam por boundary server/application e RPC autenticada administrativa. O endpoint público futuro deverá aplicar rate limit, validar token por hash, expor apenas uma sessão e nunca conceder SELECT direto.
+O navegador acessa somente route handlers Next.js. Eles validam DTOs, executam o engine no servidor e chamam RPCs `SECURITY DEFINER` mínimas usando a chave anon apenas no servidor. `anon` nunca recebe SELECT; as RPCs aceitam slug público ou token de alta entropia, validam versão/transição/expiração e não listam recursos. Erros são sanitizados.
 
 ## Alternativas
 

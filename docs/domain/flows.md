@@ -25,3 +25,13 @@ Avanços usam `revision` esperada e lock de linha. Revisão divergente gera conf
 O token público possui 256 bits aleatórios e somente seu hash é persistido. Ele não substitui autorização. Não há grants ou policies para `anon`; o Storefront futuro deverá usar endpoint server-side limitado a uma sessão, com rate limiting. Veja ADR-0009.
 
 Continuam adiados Storefront final, Cart/Delivery/Checkout reais, Orders, pagamento, analytics e retenção automática de sessões/comandos.
+
+## Public runtime boundary e Storefront
+
+A URL pública é `/r/[locationSlug]/[flowSlug]`. O browser chama exclusivamente route handlers Next.js; não instancia Supabase nem consulta tabelas. Início e avanço validam input com Zod, executam o engine server-side e retornam somente token, revisão, status, conclusão e render payload. Textos são renderizados como texto React, sem HTML arbitrário.
+
+As RPCs públicas usam slug ou hash do token, não aceitam tenant/user como autoridade, validam que o primeiro node é destino do START e que cada avanço corresponde à edge declarada da versão fixada. Erros públicos são reduzidos a `FLOW_NOT_AVAILABLE`, `SESSION_EXPIRED`, `SESSION_CHANGED` e `INVALID_ACTION`.
+
+Sessões públicas expiram após 45 minutos de inatividade; avanço renova o TTL. O Storefront bloqueia submissão simultânea e gera UUID por ação, enquanto idempotência e revisão continuam reforçadas no banco. Sessão expirada oferece reinício.
+
+A projeção pública de Catalog contém apenas nome, descrição, preço público, imagem e disponibilidade. Custos, memberships, audit e campos administrativos não são expostos. Rate limiting distribuído permanece um hook obrigatório do boundary de deploy; não foi simulado em memória nem foi adicionado Redis neste estágio.
