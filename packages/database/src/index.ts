@@ -82,9 +82,35 @@ export const createFlowGateway = (client: BrowserDatabaseClient) => ({
     return { nodes, edges };
   },
   addNode: (value: Record<string, unknown>) =>
-    client.from('flow_nodes').insert(value),
+    client.from('flow_nodes').insert(value).select('*').single(),
+  updateNode: (
+    id: string,
+    expectedUpdatedAt: string,
+    value: Record<string, unknown>,
+  ) =>
+    client.rpc('update_flow_draft_node', {
+      target_node_id: id,
+      expected_updated_at: expectedUpdatedAt,
+      target_name: value.name ?? null,
+      target_config: value.config,
+      target_editor_metadata: value.editor_metadata ?? {},
+    }),
   addEdge: (value: Record<string, unknown>) =>
-    client.from('flow_edges').insert(value),
+    client.from('flow_edges').insert(value).select('*').single(),
+  deleteEdgesFrom: (versionId: string, sourceNodeId: string) =>
+    client
+      .from('flow_edges')
+      .delete()
+      .eq('flow_version_id', versionId)
+      .eq('source_node_id', sourceNodeId),
+  replaceBranches: (
+    sourceNodeId: string,
+    branches: readonly Record<string, unknown>[],
+  ) =>
+    client.rpc('replace_flow_draft_branches', {
+      target_source_node_id: sourceNodeId,
+      target_branches: branches,
+    }),
   validate: (versionId: string) =>
     client.rpc('validate_flow_version', { target_version_id: versionId }),
   publish: (versionId: string) =>

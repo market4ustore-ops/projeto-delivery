@@ -13,3 +13,4 @@ Registros:
 
 - [2026-08-22 — Fundação executável e núcleo multi-tenant](2026-08-22-fundacao-multitenant.md)
 - [2026-08-22 — Catalog](2026-08-22-catalog.md)
+- [2026-08-22 — Flow Builder visual](2026-08-22-flow-builder.md)

@@ -11,8 +11,10 @@
   },
   "dependencies": {
     "@delivery/database": "workspace:*",
+    "@delivery/domain": "workspace:*",
     "@delivery/schemas": "workspace:*",
     "@supabase/supabase-js": "^2.49.0",
+    "@xyflow/react": "^12.11.3",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

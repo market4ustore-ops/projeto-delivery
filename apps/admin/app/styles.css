@@ -11,7 +11,7 @@ body {
   margin: 0;
 }
 main {
-  max-width: 960px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 48px 20px;
 }
@@ -75,4 +75,206 @@ button:disabled {
 }
 li {
   margin: 8px 0;
+}
+.inline-form {
+  display: grid;
+  grid-template-columns: 2fr 1fr auto;
+  gap: 12px;
+}
+.journey-list {
+  display: grid;
+  gap: 10px;
+}
+.journey-list-item {
+  display: flex;
+  justify-content: space-between;
+  text-align: left;
+  background: #fff;
+  color: #17212b;
+  border-color: #dce2e8;
+}
+.flow-builder {
+  min-height: 760px;
+  display: grid;
+  grid-template: auto minmax(560px, 1fr) auto / 210px minmax(500px, 1fr) 300px;
+  background: #fff;
+  border: 1px solid #dce2e8;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.builder-toolbar {
+  grid-column: 1 / -1;
+  padding: 14px 18px;
+  align-items: center;
+  border-bottom: 1px solid #dce2e8;
+}
+.builder-toolbar > div {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.toolbar-actions {
+  margin-left: auto;
+}
+.save-state {
+  font-size: 13px;
+  color: #526170;
+}
+.save-state--error {
+  color: #a22a2a;
+}
+.save-state--pending {
+  color: #8a5900;
+}
+.stage-library,
+.stage-config {
+  padding: 18px;
+  overflow: auto;
+}
+.stage-library {
+  border-right: 1px solid #dce2e8;
+}
+.stage-config {
+  border-left: 1px solid #dce2e8;
+}
+.stage-library section {
+  margin-top: 22px;
+}
+.stage-library h4 {
+  color: #657381;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.stage-library button {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  text-align: left;
+  color: #17212b;
+  background: #f7f9fa;
+  border-color: #dce2e8;
+}
+.journey-canvas {
+  min-width: 0;
+  background: #fafbfc;
+}
+.journey-stage {
+  width: 190px;
+  display: grid;
+  gap: 5px;
+  background: #fff;
+  border: 2px solid #cbd5df;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 5px 18px #17212b12;
+}
+.journey-stage.is-selected {
+  border-color: #116149;
+  box-shadow: 0 0 0 3px #1161491c;
+}
+.journey-stage--start {
+  background: #edf8f4;
+}
+.journey-stage--end {
+  background: #f2f4f7;
+}
+.journey-stage--choice {
+  border-left-color: #7556b5;
+}
+.journey-stage--product_list,
+.journey-stage--product,
+.journey-stage--category,
+.journey-stage--upsell {
+  border-left-color: #d57b16;
+}
+.stage-kind {
+  color: #657381;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.journey-stage small {
+  color: #657381;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.config-form,
+.next-step {
+  display: grid;
+  gap: 14px;
+}
+.config-form textarea {
+  min-height: 100px;
+  resize: vertical;
+  font: inherit;
+  padding: 10px;
+  border: 1px solid #aeb9c4;
+  border-radius: 8px;
+}
+.config-form select[multiple] {
+  min-height: 120px;
+}
+.choice-editor {
+  padding: 12px;
+  border: 1px solid #dce2e8;
+  border-radius: 10px;
+  display: grid;
+  gap: 10px;
+}
+.builder-validation {
+  grid-column: 1 / -1;
+  border-top: 1px solid #dce2e8;
+  padding: 14px 18px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 20px;
+}
+.builder-validation ul {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #9a2f2f;
+}
+.validation-ok {
+  color: #116149;
+}
+.preview-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: #17212bcc;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.preview-phone {
+  width: 390px;
+  min-height: 680px;
+  background: #f7f4ee;
+  border: 10px solid #17212b;
+  border-radius: 34px;
+  padding: 24px;
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+.preview-card {
+  margin-top: 48px;
+  background: #fff;
+  border-radius: 18px;
+  padding: 22px;
+  display: grid;
+  gap: 12px;
+  box-shadow: 0 12px 32px #17212b18;
+}
+@media (max-width: 1050px) {
+  .flow-builder {
+    grid-template-columns: 180px minmax(420px, 1fr);
+  }
+  .stage-config {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px solid #dce2e8;
+  }
 }

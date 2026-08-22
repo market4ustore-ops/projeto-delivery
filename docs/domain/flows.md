@@ -35,3 +35,11 @@ As RPCs públicas usam slug ou hash do token, não aceitam tenant/user como auto
 Sessões públicas expiram após 45 minutos de inatividade; avanço renova o TTL. O Storefront bloqueia submissão simultânea e gera UUID por ação, enquanto idempotência e revisão continuam reforçadas no banco. Sessão expirada oferece reinício.
 
 A projeção pública de Catalog contém apenas nome, descrição, preço público, imagem e disponibilidade. Custos, memberships, audit e campos administrativos não são expostos. Rate limiting distribuído permanece um hook obrigatório do boundary de deploy; não foi simulado em memória nem foi adicionado Redis neste estágio.
+
+## Flow Builder
+
+O Admin traduz as linhas persistidas para React Flow por um adapter exclusivo de apresentação. Posições ficam em `editor_metadata`; tipos, configurações e branches continuam sendo os contratos `FlowNode`/`FlowEdge`. START nasce automaticamente como “Comece aqui”.
+
+Edições ocorrem somente no draft retornado por `ensure_flow_draft`. Configurações usam os schemas Zod existentes e autosave com timestamp esperado; conflito exige recarga. A substituição dos próximos passos de uma etapa é uma RPC transacional para que nenhuma opção fique parcialmente persistida. Validação e publicação permanecem nas RPCs autoritativas existentes.
+
+A prévia do draft é autenticada e local ao Admin: ela apresenta a etapa selecionada no frame mobile e não expõe o draft pela boundary pública. A execução integral continua sendo comprovada após publicação pelo Storefront e pelo mesmo Flow Engine. Extrair o renderer visual compartilhado entre Admin e Storefront foi adiado para evitar acoplamento prematuro entre apps.
