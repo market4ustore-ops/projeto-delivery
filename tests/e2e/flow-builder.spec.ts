@@ -188,29 +188,38 @@ test('creates, publishes and executes a visual journey', async ({
   await expect(page.getByRole('button', { name: /1 itens/ })).toBeVisible();
   await page.getByRole('button', { name: /1 itens/ }).click();
   await page.getByRole('button', { name: 'Continuar para checkout' }).click();
-  await page.getByRole('button', { name: 'Iniciar checkout' }).click();
-  await page.getByRole('radio', { name: 'Entrega' }).check();
-  await page.getByRole('button', { name: 'Continuar' }).click();
-  await page.getByLabel('Nome').fill('Ana Silva');
-  await page.getByLabel('Telefone').fill('11999999999');
-  await page.getByRole('button', { name: 'Continuar' }).click();
-  await page.getByLabel('CEP').fill('01001000');
-  await page.getByLabel('Rua').fill('Praça da Sé');
-  await page.getByLabel('Número').fill('1');
-  await page.getByLabel('Bairro').fill('Sé');
-  await page.getByLabel('Cidade').fill('São Paulo');
-  await page.getByLabel('Estado').fill('SP');
-  await page.getByRole('button', { name: 'Revisar' }).click();
-  await page.getByRole('button', { name: 'Validar checkout' }).click();
+  const checkoutDialog = page.getByRole('dialog', { name: 'Checkout' });
+  await checkoutDialog
+    .getByRole('button', { name: 'Iniciar checkout' })
+    .click();
+  await checkoutDialog.getByRole('radio', { name: 'Entrega' }).check();
+  await checkoutDialog.getByRole('button', { name: 'Continuar' }).click();
+  await checkoutDialog.getByLabel('Nome').fill('Ana Silva');
+  await checkoutDialog.getByLabel('Telefone').fill('11999999999');
+  await checkoutDialog.getByRole('button', { name: 'Continuar' }).click();
+  await checkoutDialog.getByLabel('CEP').fill('01001000');
+  await checkoutDialog.getByLabel('Rua').fill('Praça da Sé');
+  await checkoutDialog.getByLabel('Número').fill('1');
+  await checkoutDialog.getByLabel('Bairro').fill('Sé');
+  await checkoutDialog.getByLabel('Cidade').fill('São Paulo');
+  await checkoutDialog.getByLabel('Estado').fill('SP');
+  await checkoutDialog.getByRole('button', { name: 'Revisar' }).click();
+  await checkoutDialog
+    .getByRole('button', { name: 'Validar checkout' })
+    .click();
   await expect(
     page.getByRole('heading', { name: 'Checkout pronto' }),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Voltar ao carrinho' }).click();
+  await checkoutDialog
+    .getByRole('button', { name: 'Voltar ao carrinho' })
+    .click();
   await page.getByRole('button', { name: '+' }).click();
   await page.getByRole('button', { name: 'Continuar para checkout' }).click();
-  await page.getByRole('button', { name: 'Iniciar checkout' }).click();
-  await expect(page.getByText('Entrega ou retirada')).toBeVisible();
-  await page.getByRole('button', { name: 'Fechar' }).click();
+  await checkoutDialog
+    .getByRole('button', { name: 'Iniciar checkout' })
+    .click();
+  await expect(checkoutDialog.getByText('Entrega ou retirada')).toBeVisible();
+  await checkoutDialog.getByRole('button', { name: 'Fechar' }).click();
   await page.getByRole('button', { name: 'Continuar' }).click();
   await expect(page.getByText('Até logo!')).toBeVisible();
 });

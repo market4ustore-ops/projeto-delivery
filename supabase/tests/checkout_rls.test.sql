@@ -35,5 +35,5 @@ select is(public.get_public_checkout((select value->>'publicToken' from carts))-
 reset role;update public.products set base_price=25 where id='40000000-0000-0000-0000-000000000071';set local role anon;
 select is(public.mutate_public_checkout((select value->>'publicToken' from carts),4,'92000000-0000-0000-0000-000000000076','{"type":"VALIDATE"}')->>'outcome','PRICE_CHANGED','price change is explicit and not silently accepted');
 reset role;
-select throws_ok($$insert into public.checkout_sessions(location_id,cart_id) values('20000000-0000-0000-0000-000000000072',(select id from public.carts where location_id='20000000-0000-0000-0000-000000000071'))$$,'23503',null,'composite FK rejects cross-location cart');
+select throws_ok($$insert into public.checkout_sessions(location_id,cart_id) values('20000000-0000-0000-0000-000000000071',(select id from public.carts where location_id='20000000-0000-0000-0000-000000000072'))$$,'23503',null,'composite FK rejects cross-location cart');
 select * from finish();rollback;
