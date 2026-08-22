@@ -25,8 +25,8 @@ select is(value->>'total','45.00','authoritative total is snapshotted') from mad
 select is(value->'items'->0->>'name','Meal','item name is snapshotted') from made;
 select is(public.create_order_from_checkout(repeat('a',64),'80000000-0000-0000-0000-000000000082')->>'displayNumber','0001','conversion retry is idempotent');
 select is(public.get_public_order_status(repeat('b',64)) is null,true,'unrelated opaque token reveals nothing');
-select is(public.get_public_order_status(repeat('a',64)) ? 'customer',false,'public projection hides customer data');
-select is(public.get_public_order_status(repeat('a',64)) ? 'timeline',false,'public projection hides internal history');
+select is(public.get_public_order_status(repeat('a',64))->'customer','null'::jsonb,'public projection hides customer data');
+select is(public.get_public_order_status(repeat('a',64))->'timeline','null'::jsonb,'public projection hides internal history');
 reset role;
 select is((select status from public.checkout_sessions where id='70000000-0000-0000-0000-000000000081'),'COMPLETED','checkout is consumed atomically');
 select is((select status::text from public.carts where id='50000000-0000-0000-0000-000000000081'),'CONVERTED','cart is consumed atomically');

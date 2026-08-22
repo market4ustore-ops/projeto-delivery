@@ -213,8 +213,9 @@ test('creates, publishes and executes a visual journey', async ({
   await checkoutDialog
     .getByRole('button', { name: 'Confirmar pedido' })
     .click();
-  await expect(checkoutDialog.getByText('Pedido confirmado')).toBeVisible();
-  await expect(checkoutDialog.getByText('CONFIRMED')).toBeVisible();
+  const orderDialog = page.getByRole('dialog', { name: 'Pedido confirmado' });
+  await expect(orderDialog.getByText('Pedido confirmado')).toBeVisible();
+  await expect(orderDialog.getByText('CONFIRMED')).toBeVisible();
 
   const adminPage = await page.context().newPage();
   await adminPage.goto('http://127.0.0.1:3000');
@@ -226,11 +227,9 @@ test('creates, publishes and executes a visual journey', async ({
   await expect(ordersPanel.getByText(/PREPARING/)).toBeVisible();
   await adminPage.close();
 
-  await checkoutDialog
-    .getByRole('button', { name: 'Atualizar status' })
-    .click();
-  await expect(checkoutDialog.getByText('PREPARING')).toBeVisible();
-  await checkoutDialog.getByRole('button', { name: 'Fechar' }).click();
+  await orderDialog.getByRole('button', { name: 'Atualizar status' }).click();
+  await expect(orderDialog.getByText('PREPARING')).toBeVisible();
+  await orderDialog.getByRole('button', { name: 'Fechar' }).click();
   await page.getByRole('button', { name: 'Continuar' }).click();
   await expect(page.getByText('Até logo!')).toBeVisible();
 });
