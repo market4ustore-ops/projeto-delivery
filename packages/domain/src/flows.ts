@@ -1,4 +1,5 @@
 import type { LocationId } from './organizations.js';
+import type { FlowCatalogReadModel } from './flow-runtime.js';
 
 export type FlowId = string & { readonly __brand: 'FlowId' };
 export type FlowVersionId = string & { readonly __brand: 'FlowVersionId' };
@@ -248,7 +249,11 @@ export const assertDraftEditable = (status: FlowVersionStatus): void => {
 };
 export type FlowExecutionContext = Readonly<{
   locationId: LocationId;
-  attributes?: Readonly<Record<string, unknown>>;
+  flowId?: FlowId;
+  flowVersionId?: FlowVersionId;
+  sessionId?: string;
+  selectedChoiceKeys?: readonly string[];
+  catalog?: FlowCatalogReadModel;
 }>;
 export type FlowEngineResult = Readonly<{
   node: FlowRuntimeNode;
@@ -263,5 +268,5 @@ export interface FlowEngine {
       input?: unknown;
       context: FlowExecutionContext;
     }>,
-  ): FlowEngineResult;
+  ): FlowEngineResult & Readonly<{ render?: unknown; completed?: boolean }>;
 }

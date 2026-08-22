@@ -132,3 +132,20 @@ export const flowEdgeInputSchema = z.object({
   condition: flowConditionSchema,
   sortOrder: z.number().int().min(0).default(0),
 });
+export const startFlowSessionSchema = z.object({
+  locationId: uuid,
+  flowSlug: slug,
+});
+export const advanceFlowSessionSchema = z.object({
+  locationId: uuid,
+  publicToken: z.string().regex(/^[a-f0-9]{64}$/),
+  expectedRevision: z.number().int().min(0),
+  idempotencyKey: z.string().min(8).max(200),
+  action: z.discriminatedUnion('type', [
+    z.object({ type: z.literal('CONTINUE') }),
+    z.object({
+      type: z.literal('SELECT_CHOICE'),
+      choiceKey: z.string().trim().min(1).max(80),
+    }),
+  ]),
+});

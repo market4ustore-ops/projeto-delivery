@@ -90,3 +90,82 @@ export const createFlowGateway = (client: BrowserDatabaseClient) => ({
   publish: (versionId: string) =>
     client.rpc('publish_flow_version', { target_version_id: versionId }),
 });
+
+export const createFlowRuntimeGateway = (client: BrowserDatabaseClient) => ({
+  findPublished: async (locationId: string, slug: string) =>
+    client
+      .from('flows')
+      .select('id,location_id,published_version_id')
+      .eq('location_id', locationId)
+      .eq('slug', slug)
+      .not('published_version_id', 'is', null)
+      .maybeSingle(),
+  definition: async (versionId: string) => {
+    const [version, nodes, edges] = await Promise.all([
+      client
+        .from('flow_versions')
+        .select('id,flow_id,schema_version,flows!inner(location_id)')
+        .eq('id', versionId)
+        .single(),
+      client.from('flow_nodes').select('*').eq('flow_version_id', versionId),
+      client
+        .from('flow_edges')
+        .select('*')
+        .eq('flow_version_id', versionId)
+        .order('sort_order'),
+    ]);
+    return { version, nodes, edges };
+  },
+  categories: (locationId: string, ids: readonly string[]) =>
+    ids.length
+      ? client
+          .from('categories')
+          .select('id,name')
+          .eq('location_id', locationId)
+          .in('id', [...ids])
+      : Promise.resolve({ data: [], error: null }),
+  products: (
+    locationId: string,
+    input: { ids?: readonly string[]; categoryId?: string },
+  ) => {
+    let query = client
+      .from('products')
+      .select('id,name,base_price,category_id,is_available')
+      .eq('location_id', locationId);
+    if (input.ids?.length) query = query.in('id', [...input.ids]);
+    if (input.categoryId) query = query.eq('category_id', input.categoryId);
+    return query;
+  },
+  createSession: (value: {
+    locationId: string;
+    flowSlug: string;
+    currentNodeId: string;
+    engineResult: unknown;
+  }) =>
+    client.rpc('create_flow_session', {
+      target_location_id: value.locationId,
+      target_flow_slug: value.flowSlug,
+      target_current_node_id: value.currentNodeId,
+      target_engine_result: value.engineResult,
+    }),
+  advanceSession: (value: {
+    publicToken: string;
+    locationId: string;
+    expectedRevision: number;
+    idempotencyKey: string;
+    currentNodeId: string;
+    completed: boolean;
+    selectedChoiceKeys: readonly string[];
+    engineResult: unknown;
+  }) =>
+    client.rpc('advance_flow_session', {
+      public_token: value.publicToken,
+      target_location_id: value.locationId,
+      expected_revision: value.expectedRevision,
+      target_idempotency_key: value.idempotencyKey,
+      target_current_node_id: value.currentNodeId,
+      target_completed: value.completed,
+      target_selected_choice_keys: value.selectedChoiceKeys,
+      target_engine_result: value.engineResult,
+    }),
+});
