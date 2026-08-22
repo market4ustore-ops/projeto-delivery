@@ -14,6 +14,52 @@ test('creates, publishes and executes a visual journey', async ({
     data: { email, password },
   });
   expect(signup.ok()).toBeTruthy();
+  const token = ((await signup.json()) as { access_token: string })
+    .access_token;
+  const authenticatedHeaders = {
+    apikey: anonKey!,
+    Authorization: `Bearer ${token}`,
+  };
+  const organization = await request.post(
+    `${apiUrl}/rest/v1/rpc/create_organization`,
+    {
+      headers: authenticatedHeaders,
+      data: { organization_name: 'Loja Builder' },
+    },
+  );
+  expect(organization.ok()).toBeTruthy();
+  const organizationId = (await organization.json()) as string;
+  const location = await request.post(`${apiUrl}/rest/v1/rpc/create_location`, {
+    headers: authenticatedHeaders,
+    data: {
+      target_organization_id: organizationId,
+      location_name: 'Unidade Centro',
+    },
+  });
+  expect(location.ok()).toBeTruthy();
+  const locationId = (await location.json()) as string;
+  const categoryId = crypto.randomUUID();
+  const category = await request.post(`${apiUrl}/rest/v1/categories`, {
+    headers: { ...authenticatedHeaders, Prefer: 'return=minimal' },
+    data: {
+      id: categoryId,
+      location_id: locationId,
+      name: 'Hambúrguer',
+      slug: 'hamburguer',
+    },
+  });
+  expect(category.ok()).toBeTruthy();
+  const product = await request.post(`${apiUrl}/rest/v1/products`, {
+    headers: { ...authenticatedHeaders, Prefer: 'return=minimal' },
+    data: {
+      location_id: locationId,
+      category_id: categoryId,
+      name: 'X-Burger',
+      slug: 'x-burger',
+      base_price: '29.90',
+    },
+  });
+  expect(product.ok()).toBeTruthy();
 
   await page.goto('http://127.0.0.1:3000');
   await page.getByLabel('E-mail').fill(email);
@@ -23,33 +69,10 @@ test('creates, publishes and executes a visual journey', async ({
     page.getByRole('heading', { name: 'Fundação multi-tenant' }),
   ).toBeVisible();
 
-  await page.getByLabel('Nome').first().fill('Loja Builder');
-  await page.getByRole('button', { name: 'Criar organização' }).click();
-  await expect(page.getByLabel('Organização ativa')).toContainText(
-    'Loja Builder',
-  );
   await page
-    .getByRole('article')
-    .filter({ hasText: 'Unidades acessíveis' })
-    .getByLabel('Nome')
-    .fill('Unidade Centro');
-  await page.getByRole('button', { name: 'Criar unidade' }).click();
+    .getByLabel('Organização ativa')
+    .selectOption({ label: /Loja Builder/ });
   await page.getByRole('button', { name: 'Unidade Centro' }).click();
-
-  const catalog = page
-    .getByRole('heading', { name: 'Catálogo da unidade' })
-    .locator('..');
-  await catalog.getByPlaceholder('Nome').first().fill('Hambúrguer');
-  await catalog.getByPlaceholder('slug').first().fill('hamburguer');
-  await catalog.getByRole('button', { name: 'Criar categoria' }).click();
-  await catalog.getByPlaceholder('Nome').nth(1).fill('X-Burger');
-  await catalog.getByPlaceholder('slug').nth(1).fill('x-burger');
-  await catalog.getByPlaceholder('29.90').fill('29.90');
-  await catalog
-    .getByRole('combobox')
-    .first()
-    .selectOption({ label: 'Hambúrguer' });
-  await catalog.getByRole('button', { name: 'Criar produto' }).click();
 
   const journeys = page.getByTestId('journeys-list');
   await journeys
@@ -102,8 +125,6 @@ test('creates, publishes and executes a visual journey', async ({
   await page.getByRole('button', { name: 'Publicar' }).click();
   await expect(page.getByText('Jornada publicada.')).toBeVisible();
 
-  const token = ((await signup.json()) as { access_token: string })
-    .access_token;
   const locationResponse = await request.get(
     `${apiUrl}/rest/v1/locations?select=slug&name=eq.Unidade%20Centro`,
     { headers: { apikey: anonKey!, Authorization: `Bearer ${token}` } },
