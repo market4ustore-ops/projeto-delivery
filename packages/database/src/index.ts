@@ -50,3 +50,43 @@ export const createCatalogGateway = (client: BrowserDatabaseClient) => ({
   updateModifierOption: (id: string, value: Record<string, unknown>) =>
     client.from('modifier_options').update(value).eq('id', id),
 });
+
+export const createFlowGateway = (client: BrowserDatabaseClient) => ({
+  list: (locationId: string) =>
+    client
+      .from('flows')
+      .select('*,flow_versions(*)')
+      .eq('location_id', locationId)
+      .order('name'),
+  create: (locationId: string, name: string, slug: string) =>
+    client.rpc('create_flow', {
+      target_location_id: locationId,
+      flow_name: name,
+      flow_slug: slug,
+    }),
+  ensureDraft: (flowId: string) =>
+    client.rpc('ensure_flow_draft', { target_flow_id: flowId }),
+  definition: async (versionId: string) => {
+    const [nodes, edges] = await Promise.all([
+      client
+        .from('flow_nodes')
+        .select('*')
+        .eq('flow_version_id', versionId)
+        .order('created_at'),
+      client
+        .from('flow_edges')
+        .select('*')
+        .eq('flow_version_id', versionId)
+        .order('sort_order'),
+    ]);
+    return { nodes, edges };
+  },
+  addNode: (value: Record<string, unknown>) =>
+    client.from('flow_nodes').insert(value),
+  addEdge: (value: Record<string, unknown>) =>
+    client.from('flow_edges').insert(value),
+  validate: (versionId: string) =>
+    client.rpc('validate_flow_version', { target_version_id: versionId }),
+  publish: (versionId: string) =>
+    client.rpc('publish_flow_version', { target_version_id: versionId }),
+});

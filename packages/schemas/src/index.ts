@@ -66,3 +66,69 @@ export const modifierOptionInputSchema = z.object({
   name,
   priceDelta: z.string().regex(/^-?\d+(\.\d{1,2})?$/),
 });
+
+const uuid = z.string().uuid();
+export const flowNodeConfigSchema = z.union([
+  z.object({ type: z.literal('START') }).strict(),
+  z.object({ type: z.literal('CART') }).strict(),
+  z.object({ type: z.literal('DELIVERY') }).strict(),
+  z.object({ type: z.literal('CHECKOUT') }).strict(),
+  z.object({
+    type: z.literal('TEXT'),
+    title: z.string().trim().min(1).max(200),
+    body: z.string().trim().max(4000).optional(),
+  }),
+  z
+    .object({
+      type: z.literal('CHOICE'),
+      title: z.string().trim().min(1).max(200),
+      options: z
+        .array(
+          z.object({
+            key: z.string().trim().min(1).max(80),
+            label: z.string().trim().min(1).max(200),
+          }),
+        )
+        .min(1),
+    })
+    .refine(
+      (v) => new Set(v.options.map((o) => o.key)).size === v.options.length,
+    ),
+  z.object({ type: z.literal('CATEGORY'), categoryIds: z.array(uuid).min(1) }),
+  z
+    .object({
+      type: z.literal('PRODUCT_LIST'),
+      categoryId: uuid.optional(),
+      productIds: z.array(uuid).min(1).optional(),
+    })
+    .refine((v) => Boolean(v.categoryId || v.productIds?.length)),
+  z.object({ type: z.literal('PRODUCT'), productId: uuid }),
+  z.object({ type: z.literal('UPSELL'), productIds: z.array(uuid).min(1) }),
+  z.object({
+    type: z.literal('END'),
+    title: z.string().trim().min(1).max(200).optional(),
+  }),
+]);
+export const flowConditionSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('ALWAYS') }),
+  z.object({
+    type: z.literal('CHOICE_EQUALS'),
+    choiceKey: z.string().trim().min(1).max(80),
+  }),
+]);
+export const createFlowSchema = z.object({ locationId: uuid, name, slug });
+export const flowNodeInputSchema = z.object({
+  flowVersionId: uuid,
+  name: z.string().trim().min(1).max(120).optional(),
+  config: flowNodeConfigSchema,
+  position: z
+    .object({ x: z.number().finite(), y: z.number().finite() })
+    .optional(),
+});
+export const flowEdgeInputSchema = z.object({
+  flowVersionId: uuid,
+  sourceNodeId: uuid,
+  targetNodeId: uuid,
+  condition: flowConditionSchema,
+  sortOrder: z.number().int().min(0).default(0),
+});

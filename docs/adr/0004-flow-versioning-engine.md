@@ -1,6 +1,6 @@
 # ADR-0004: Versionamento e execução de flows
 
-**Status:** Proposed
+**Status:** Accepted
 
 ## Contexto
 
