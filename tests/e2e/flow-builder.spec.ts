@@ -50,9 +50,11 @@ test('creates, publishes and executes a visual journey', async ({
     },
   });
   expect(category.ok()).toBeTruthy();
+  const productId = crypto.randomUUID();
   const product = await request.post(`${apiUrl}/rest/v1/products`, {
     headers: { ...authenticatedHeaders, Prefer: 'return=minimal' },
     data: {
+      id: productId,
       location_id: locationId,
       category_id: categoryId,
       name: 'X-Burger',
@@ -61,6 +63,41 @@ test('creates, publishes and executes a visual journey', async ({
     },
   });
   expect(product.ok()).toBeTruthy();
+  const variant = await request.post(`${apiUrl}/rest/v1/product_variants`, {
+    headers: { ...authenticatedHeaders, Prefer: 'return=minimal' },
+    data: {
+      product_id: productId,
+      name: 'Duplo',
+      price: '34.90',
+      is_default: true,
+    },
+  });
+  expect(variant.ok()).toBeTruthy();
+  const modifierGroupId = crypto.randomUUID();
+  const modifierGroup = await request.post(
+    `${apiUrl}/rest/v1/modifier_groups`,
+    {
+      headers: { ...authenticatedHeaders, Prefer: 'return=minimal' },
+      data: {
+        id: modifierGroupId,
+        product_id: productId,
+        name: 'Molho',
+        min_selections: 1,
+        max_selections: 1,
+        is_required: true,
+      },
+    },
+  );
+  expect(modifierGroup.ok()).toBeTruthy();
+  const modifier = await request.post(`${apiUrl}/rest/v1/modifier_options`, {
+    headers: { ...authenticatedHeaders, Prefer: 'return=minimal' },
+    data: {
+      modifier_group_id: modifierGroupId,
+      name: 'Especial',
+      price_delta: '2.50',
+    },
+  });
+  expect(modifier.ok()).toBeTruthy();
   const flow = await request.post(`${apiUrl}/rest/v1/rpc/create_flow`, {
     headers: authenticatedHeaders,
     data: {
@@ -138,6 +175,18 @@ test('creates, publishes and executes a visual journey', async ({
   await expect(page.getByText('O que você deseja?')).toBeVisible();
   await page.getByRole('button', { name: 'Hambúrguer' }).click();
   await expect(page.getByRole('heading', { name: 'Produtos' })).toBeVisible();
+  await page.getByRole('button', { name: 'Personalizar / Adicionar' }).click();
+  await page.getByLabel(/Especial/).check();
+  await page.getByRole('button', { name: 'Adicionar ao pedido' }).click();
+  await page.getByRole('button', { name: /1 itens/ }).click();
+  await expect(page.getByText('Subtotal: R$ 37,40')).toBeVisible();
+  await page.getByRole('button', { name: '+' }).click();
+  await expect(page.getByText('Subtotal: R$ 74,80')).toBeVisible();
+  await page.getByRole('button', { name: 'Editar' }).click();
+  await page.getByLabel('Quantidade').fill('1');
+  await page.getByRole('button', { name: 'Salvar alterações' }).click();
+  await expect(page.getByRole('button', { name: /1 itens/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Fechar' }).click();
   await page.getByRole('button', { name: 'Continuar' }).click();
   await expect(page.getByText('Até logo!')).toBeVisible();
 });

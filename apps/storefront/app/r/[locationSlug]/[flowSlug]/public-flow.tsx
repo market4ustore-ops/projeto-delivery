@@ -11,31 +11,71 @@ type Render =
   | { type: 'TEXT'; title: string; body?: string }
   | { type: 'CHOICE'; title: string; options: { key: string; label: string }[] }
   | { type: 'CATEGORY'; categories: { id: string; name: string }[] }
-  | { type: 'PRODUCT_LIST' | 'UPSELL'; products: Product[] }
+  | { type: 'PRODUCT_LIST'; products: Product[] }
+  | { type: 'UPSELL'; products: Product[] }
   | { type: 'PRODUCT'; product: Product }
   | { type: 'BOUNDARY'; boundary: 'CART' | 'DELIVERY' | 'CHECKOUT' }
   | { type: 'END'; title?: string };
-type State = {
+type FlowState = {
   publicToken: string;
   revision: number;
   status: string;
   render: Render;
   completed: boolean;
 };
-const boundary = {
-  CART: 'O carrinho será implementado na próxima etapa.',
-  DELIVERY: 'As opções de entrega serão implementadas na próxima etapa.',
-  CHECKOUT: 'O checkout será implementado na próxima etapa.',
+type CartItem = {
+  id: string;
+  productId: string;
+  variantId?: string | null;
+  quantity: number;
+  productName: string;
+  variantName?: string | null;
+  unitPrice: string;
+  lineTotal: string;
+  modifiers: { optionId: string; name: string; priceDelta: string }[];
 };
-function Products({ items }: { items: Product[] }) {
+type Cart = {
+  revision: number;
+  status: string;
+  subtotal: string;
+  items: CartItem[];
+};
+type Configuration = {
+  id: string;
+  name: string;
+  description?: string | null;
+  basePrice: string;
+  variants: { id: string; name: string; price: string; default: boolean }[];
+  modifierGroups: {
+    id: string;
+    name: string;
+    minSelections: number;
+    maxSelections: number;
+    required: boolean;
+    options: { id: string; name: string; priceDelta: string }[];
+  }[];
+};
+const money = (value: string) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+    Number(value),
+  );
+function ProductCards({
+  items,
+  onOpen,
+}: {
+  items: Product[];
+  onOpen: (p: Product) => void;
+}) {
   return (
     <ul className="cards">
       {items.map((p) => (
         <li key={p.id}>
           <strong>{p.name}</strong>
-          <span>R$ {p.price}</span>
+          <span>{money(p.price)}</span>
           {p.description && <p>{p.description}</p>}
-          <small>{p.available ? 'Disponível' : 'Indisponível'}</small>
+          <button disabled={!p.available} onClick={() => onOpen(p)}>
+            Personalizar / Adicionar
+          </button>
         </li>
       ))}
     </ul>
@@ -43,125 +83,104 @@ function Products({ items }: { items: Product[] }) {
 }
 function Renderer({
   render,
-  onAction,
   busy,
+  onAction,
+  onProduct,
+  onCart,
 }: {
   render: Render;
+  busy: boolean;
   onAction: (
     a: { type: 'CONTINUE' } | { type: 'SELECT_CHOICE'; choiceKey: string },
   ) => void;
-  busy: boolean;
+  onProduct: (p: Product) => void;
+  onCart: () => void;
 }) {
-  switch (render.type) {
-    case 'TEXT':
-      return (
-        <>
-          <h1>{render.title}</h1>
-          {render.body && <p>{render.body}</p>}
-          <button
-            disabled={busy}
-            onClick={() => onAction({ type: 'CONTINUE' })}
-          >
-            Continuar
-          </button>
-        </>
-      );
-    case 'CHOICE':
-      return (
-        <>
-          <h1>{render.title}</h1>
-          <div className="choices">
-            {render.options.map((o) => (
-              <button
-                disabled={busy}
-                key={o.key}
-                onClick={() =>
-                  onAction({ type: 'SELECT_CHOICE', choiceKey: o.key })
-                }
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </>
-      );
-    case 'CATEGORY':
-      return (
-        <>
-          <h1>Categorias</h1>
-          <ul className="cards">
-            {render.categories.map((c) => (
-              <li key={c.id}>{c.name}</li>
-            ))}
-          </ul>
-          <button
-            disabled={busy}
-            onClick={() => onAction({ type: 'CONTINUE' })}
-          >
-            Continuar
-          </button>
-        </>
-      );
-    case 'PRODUCT_LIST':
-      return (
-        <>
-          <h1>Produtos</h1>
-          <Products items={render.products} />
-          <button
-            disabled={busy}
-            onClick={() => onAction({ type: 'CONTINUE' })}
-          >
-            Continuar
-          </button>
-        </>
-      );
-    case 'PRODUCT':
-      return (
-        <>
-          <h1>{render.product.name}</h1>
-          <Products items={[render.product]} />
-          <button
-            disabled={busy}
-            onClick={() => onAction({ type: 'CONTINUE' })}
-          >
-            Continuar
-          </button>
-        </>
-      );
-    case 'UPSELL':
-      return (
-        <>
-          <h1>Você também pode gostar</h1>
-          <Products items={render.products} />
-          <button
-            disabled={busy}
-            onClick={() => onAction({ type: 'CONTINUE' })}
-          >
-            Continuar
-          </button>
-        </>
-      );
-    case 'BOUNDARY':
-      return (
-        <>
-          <h1>{render.boundary}</h1>
-          <p>{boundary[render.boundary]}</p>
-          <button
-            disabled={busy}
-            onClick={() => onAction({ type: 'CONTINUE' })}
-          >
-            Continuar
-          </button>
-        </>
-      );
-    case 'END':
-      return (
-        <>
-          <h1>{render.title ?? 'Jornada concluída'}</h1>
-          <p>Obrigado.</p>
-        </>
-      );
-  }
+  if (render.type === 'TEXT')
+    return (
+      <>
+        <h1>{render.title}</h1>
+        {render.body && <p>{render.body}</p>}
+        <button disabled={busy} onClick={() => onAction({ type: 'CONTINUE' })}>
+          Continuar
+        </button>
+      </>
+    );
+  if (render.type === 'CHOICE')
+    return (
+      <>
+        <h1>{render.title}</h1>
+        <div className="choices">
+          {render.options.map((o) => (
+            <button
+              disabled={busy}
+              key={o.key}
+              onClick={() =>
+                onAction({ type: 'SELECT_CHOICE', choiceKey: o.key })
+              }
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </>
+    );
+  if (render.type === 'CATEGORY')
+    return (
+      <>
+        <h1>Categorias</h1>
+        <ul className="cards">
+          {render.categories.map((c) => (
+            <li key={c.id}>{c.name}</li>
+          ))}
+        </ul>
+        <button onClick={() => onAction({ type: 'CONTINUE' })}>
+          Continuar
+        </button>
+      </>
+    );
+  if (render.type === 'PRODUCT_LIST' || render.type === 'UPSELL')
+    return (
+      <>
+        <h1>
+          {render.type === 'UPSELL' ? 'Você também pode gostar' : 'Produtos'}
+        </h1>
+        <ProductCards items={render.products} onOpen={onProduct} />
+        <button onClick={() => onAction({ type: 'CONTINUE' })}>
+          Continuar
+        </button>
+      </>
+    );
+  if (render.type === 'PRODUCT')
+    return (
+      <>
+        <h1>{render.product.name}</h1>
+        <ProductCards items={[render.product]} onOpen={onProduct} />
+        <button onClick={() => onAction({ type: 'CONTINUE' })}>
+          Continuar
+        </button>
+      </>
+    );
+  if (render.type === 'BOUNDARY')
+    return (
+      <>
+        <h1>{render.boundary}</h1>
+        {render.boundary === 'CART' ? (
+          <button onClick={onCart}>Abrir carrinho</button>
+        ) : (
+          <p>Esta etapa será implementada futuramente.</p>
+        )}
+        <button onClick={() => onAction({ type: 'CONTINUE' })}>
+          Continuar
+        </button>
+      </>
+    );
+  return (
+    <>
+      <h1>{render.title ?? 'Jornada concluída'}</h1>
+      <p>Obrigado.</p>
+    </>
+  );
 }
 export function PublicFlow({
   locationSlug,
@@ -170,23 +189,46 @@ export function PublicFlow({
   locationSlug: string;
   flowSlug: string;
 }) {
-  const [state, setState] = useState<State | null>(null),
+  const [flow, setFlow] = useState<FlowState | null>(null),
+    [cartToken, setCartToken] = useState(''),
+    [cart, setCart] = useState<Cart | null>(null),
+    [configuration, setConfiguration] = useState<Configuration | null>(null),
+    [editing, setEditing] = useState<CartItem | null>(null),
+    [variantId, setVariantId] = useState(''),
+    [options, setOptions] = useState<string[]>([]),
+    [quantity, setQuantity] = useState(1),
+    [cartOpen, setCartOpen] = useState(false),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    [sessionExpired, setSessionExpired] = useState(false);
   async function start() {
     setBusy(true);
     setError('');
+    setSessionExpired(false);
     try {
-      const r = await fetch('/api/public/flows/start', {
+      const [flowResponse, cartResponse] = await Promise.all([
+        fetch('/api/public/flows/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ locationSlug, flowSlug }),
         }),
-        data = (await r.json()) as State & { error?: string };
-      if (!r.ok) throw new Error(data.error);
-      setState(data);
+        fetch('/api/public/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ locationSlug }),
+        }),
+      ]);
+      const f = (await flowResponse.json()) as FlowState & { error?: string };
+      const c = (await cartResponse.json()) as {
+        publicToken: string;
+        cart: Cart;
+      };
+      if (!flowResponse.ok || !cartResponse.ok) throw new Error();
+      setFlow(f);
+      setCartToken(c.publicToken);
+      setCart(c.cart);
     } catch {
-      setError('Este fluxo não está disponível.');
+      setError('Esta jornada não está disponível.');
     } finally {
       setBusy(false);
     }
@@ -194,63 +236,287 @@ export function PublicFlow({
   async function advance(
     action: { type: 'CONTINUE' } | { type: 'SELECT_CHOICE'; choiceKey: string },
   ) {
-    if (!state || busy) return;
+    if (!flow || busy) return;
     setBusy(true);
-    setError('');
     try {
       const r = await fetch('/api/public/sessions/advance', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            publicToken: state.publicToken,
-            expectedRevision: state.revision,
-            idempotencyKey: crypto.randomUUID(),
-            action,
-          }),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          publicToken: flow.publicToken,
+          expectedRevision: flow.revision,
+          idempotencyKey: crypto.randomUUID(),
+          action,
         }),
-        data = (await r.json()) as State & { error?: string };
+      });
+      const data = (await r.json()) as FlowState & { error?: string };
+      if (!r.ok) {
+        if (data.error === 'SESSION_EXPIRED') {
+          setSessionExpired(true);
+          setError('Sua sessão expirou.');
+          return;
+        }
+        throw new Error();
+      }
+      setFlow(data);
+    } catch {
+      setError('Não foi possível avançar.');
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function openProduct(product: Product, item?: CartItem) {
+    const r = await fetch(
+      `/api/public/cart/product?token=${cartToken}&productId=${product.id}`,
+    );
+    if (!r.ok) return setError('Produto indisponível.');
+    const data = (await r.json()) as Configuration;
+    setConfiguration(data);
+    setEditing(item ?? null);
+    setVariantId(
+      item?.variantId ?? data.variants.find((v) => v.default)?.id ?? '',
+    );
+    setOptions(item?.modifiers.map((m) => m.optionId) ?? []);
+    setQuantity(item?.quantity ?? 1);
+  }
+  async function mutate(action: Record<string, unknown>) {
+    if (!cart) return;
+    setBusy(true);
+    try {
+      const r = await fetch('/api/public/cart', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          publicToken: cartToken,
+          expectedRevision: cart.revision,
+          idempotencyKey: crypto.randomUUID(),
+          action,
+        }),
+      });
+      const data = (await r.json()) as Cart & { error?: string };
       if (!r.ok) throw new Error(data.error);
-      setState(data);
+      setCart(data);
+      setConfiguration(null);
+      setEditing(null);
     } catch (e) {
       setError(
-        e instanceof Error && e.message === 'SESSION_EXPIRED'
-          ? 'Sua sessão expirou. Reinicie para continuar.'
-          : 'Não foi possível avançar. Reinicie ou tente novamente.',
+        e instanceof Error && e.message === 'CART_REVISION_CONFLICT'
+          ? 'O carrinho mudou. Tente novamente.'
+          : 'Não foi possível atualizar o carrinho.',
       );
     } finally {
       setBusy(false);
     }
   }
+  const add = () =>
+    configuration &&
+    mutate({
+      type: editing ? 'UPDATE' : 'ADD',
+      ...(editing ? { itemId: editing.id } : {}),
+      productId: configuration.id,
+      variantId: variantId || null,
+      modifierOptionIds: options,
+      quantity,
+    });
   return (
     <main className="journey">
       <section className="panel" aria-busy={busy}>
         <p className="eyebrow">Delivery</p>
-        {!state ? (
+        {!flow ? (
           <>
             <h1>Iniciar pedido</h1>
             <p>Comece a jornada publicada deste restaurante.</p>
-            <button disabled={busy} onClick={() => void start()}>
-              {busy ? 'Iniciando…' : 'Começar'}
+            <button onClick={() => void start()} disabled={busy}>
+              Começar
             </button>
           </>
         ) : (
           <Renderer
-            render={state.render}
-            onAction={(a) => void advance(a)}
+            render={flow.render}
             busy={busy}
+            onAction={(a) => void advance(a)}
+            onProduct={(p) => void openProduct(p)}
+            onCart={() => setCartOpen(true)}
           />
         )}
         <p role="alert">{error}</p>
-        {error && (
+        {sessionExpired && (
           <button
-            className="secondary"
-            disabled={busy}
-            onClick={() => void start()}
+            onClick={() => {
+              setFlow(null);
+              setCart(null);
+              setCartToken('');
+              setSessionExpired(false);
+              setError('');
+            }}
           >
             Reiniciar sessão
           </button>
         )}
       </section>
+      {cart && (
+        <button className="cart-bar" onClick={() => setCartOpen(true)}>
+          🛒 {cart.items.reduce((n, i) => n + i.quantity, 0)} itens ·{' '}
+          {money(cart.subtotal)}
+        </button>
+      )}
+      {configuration && (
+        <div
+          className="sheet-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Personalizar produto"
+        >
+          <section className="sheet">
+            <button
+              className="secondary"
+              onClick={() => setConfiguration(null)}
+            >
+              Fechar
+            </button>
+            <h2>{configuration.name}</h2>
+            {configuration.description && <p>{configuration.description}</p>}
+            {configuration.variants.length > 0 && (
+              <fieldset>
+                <legend>Escolha uma opção</legend>
+                {configuration.variants.map((v) => (
+                  <label key={v.id}>
+                    <input
+                      type="radio"
+                      name="variant"
+                      checked={variantId === v.id}
+                      onChange={() => setVariantId(v.id)}
+                    />
+                    {v.name} · {money(v.price)}
+                  </label>
+                ))}
+              </fieldset>
+            )}
+            {configuration.modifierGroups.map((g) => (
+              <fieldset key={g.id}>
+                <legend>
+                  {g.name} ({g.minSelections}–{g.maxSelections})
+                </legend>
+                {g.options.map((o) => (
+                  <label key={o.id}>
+                    <input
+                      type="checkbox"
+                      checked={options.includes(o.id)}
+                      onChange={(e) =>
+                        setOptions((current) =>
+                          e.target.checked
+                            ? [...current, o.id]
+                            : current.filter((id) => id !== o.id),
+                        )
+                      }
+                    />
+                    {o.name} · {money(o.priceDelta)}
+                  </label>
+                ))}
+              </fieldset>
+            ))}
+            <label>
+              Quantidade
+              <input
+                aria-label="Quantidade"
+                type="number"
+                min="1"
+                max="99"
+                value={quantity}
+                onChange={(e) => setQuantity(Number(e.target.value))}
+              />
+            </label>
+            <button disabled={busy} onClick={() => void add()}>
+              {editing ? 'Salvar alterações' : 'Adicionar ao pedido'}
+            </button>
+          </section>
+        </div>
+      )}
+      {cartOpen && cart && (
+        <div
+          className="sheet-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Carrinho"
+        >
+          <section className="sheet">
+            <button className="secondary" onClick={() => setCartOpen(false)}>
+              Fechar
+            </button>
+            <h2>Seu carrinho</h2>
+            {cart.items.map((i) => (
+              <article className="cart-item" key={i.id}>
+                <strong>{i.productName}</strong>
+                <span>{i.variantName}</span>
+                <small>{i.modifiers.map((m) => m.name).join(', ')}</small>
+                <span>
+                  {i.quantity} × {money(i.unitPrice)} = {money(i.lineTotal)}
+                </span>
+                <div>
+                  <button
+                    className="secondary"
+                    onClick={() =>
+                      void openProduct(
+                        {
+                          id: i.productId,
+                          name: i.productName,
+                          price: i.unitPrice,
+                          available: true,
+                        },
+                        i,
+                      )
+                    }
+                  >
+                    Editar
+                  </button>
+                  <button
+                    className="secondary"
+                    onClick={() =>
+                      void mutate({
+                        type: 'UPDATE',
+                        itemId: i.id,
+                        productId: i.productId,
+                        variantId: i.variantId ?? null,
+                        modifierOptionIds: i.modifiers.map((m) => m.optionId),
+                        quantity: Math.min(99, i.quantity + 1),
+                      })
+                    }
+                  >
+                    +
+                  </button>
+                  {i.quantity > 1 && (
+                    <button
+                      className="secondary"
+                      onClick={() =>
+                        void mutate({
+                          type: 'UPDATE',
+                          itemId: i.id,
+                          productId: i.productId,
+                          variantId: i.variantId ?? null,
+                          modifierOptionIds: i.modifiers.map((m) => m.optionId),
+                          quantity: i.quantity - 1,
+                        })
+                      }
+                    >
+                      −
+                    </button>
+                  )}
+                  <button
+                    className="secondary"
+                    onClick={() =>
+                      void mutate({ type: 'REMOVE', itemId: i.id })
+                    }
+                  >
+                    Remover
+                  </button>
+                </div>
+              </article>
+            ))}
+            <h3>Subtotal: {money(cart.subtotal)}</h3>
+            <button disabled>Continuar (em breve)</button>
+          </section>
+        </div>
+      )}
     </main>
   );
 }

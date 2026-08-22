@@ -216,3 +216,31 @@ export const publicFlowDefinitionSchema = z.object({
     ),
   }),
 });
+
+export const publicCartCreateSchema = z.object({ locationSlug: slug });
+export const publicCartTokenSchema = z.object({
+  publicToken: z.string().regex(/^[a-f0-9]{64}$/),
+});
+export const publicCartMutationSchema = z.object({
+  publicToken: z.string().regex(/^[a-f0-9]{64}$/),
+  expectedRevision: z.number().int().min(0),
+  idempotencyKey: z.string().uuid(),
+  action: z.discriminatedUnion('type', [
+    z.object({
+      type: z.literal('ADD'),
+      productId: uuid,
+      variantId: uuid.nullable().optional(),
+      modifierOptionIds: z.array(uuid).max(50),
+      quantity: z.number().int().min(1).max(99),
+    }),
+    z.object({
+      type: z.literal('UPDATE'),
+      itemId: uuid,
+      productId: uuid,
+      variantId: uuid.nullable().optional(),
+      modifierOptionIds: z.array(uuid).max(50),
+      quantity: z.number().int().min(1).max(99),
+    }),
+    z.object({ type: z.literal('REMOVE'), itemId: uuid }),
+  ]),
+});

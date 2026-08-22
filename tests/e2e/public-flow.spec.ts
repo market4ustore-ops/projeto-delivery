@@ -1,4 +1,13 @@
 import { expect, test } from '@playwright/test';
+const emptyCart = {
+  publicToken: 'b'.repeat(64),
+  cart: { revision: 0, status: 'ACTIVE', subtotal: '0', items: [] },
+};
+async function mockCart(page: import('@playwright/test').Page) {
+  await page.route('**/api/public/cart', (route) =>
+    route.fulfill({ json: emptyCart }),
+  );
+}
 const states = [
   { type: 'TEXT', title: 'Bem-vindo', body: 'Monte sua jornada.' },
   {
@@ -27,6 +36,7 @@ const states = [
 test('walks a published flow through every public node view', async ({
   page,
 }) => {
+  await mockCart(page);
   let step = 0;
   await page.route('**/api/public/flows/start', (r) =>
     r.fulfill({
@@ -83,6 +93,7 @@ test('walks a published flow through every public node view', async ({
   expect(step).toBe(9);
 });
 test('shows a safe error for unavailable flow', async ({ page }) => {
+  await mockCart(page);
   await page.route('**/api/public/flows/start', (r) =>
     r.fulfill({ status: 404, json: { error: 'FLOW_NOT_AVAILABLE' } }),
   );
@@ -93,6 +104,7 @@ test('shows a safe error for unavailable flow', async ({ page }) => {
   );
 });
 test('offers restart when a session expires', async ({ page }) => {
+  await mockCart(page);
   await page.route('**/api/public/flows/start', (r) =>
     r.fulfill({
       json: {
