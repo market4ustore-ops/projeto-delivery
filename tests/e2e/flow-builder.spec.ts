@@ -186,7 +186,6 @@ test('creates, publishes and executes a visual journey', async ({
   await page.getByLabel('Quantidade').fill('1');
   await page.getByRole('button', { name: 'Salvar alterações' }).click();
   await expect(page.getByRole('button', { name: /1 itens/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Fechar' }).click();
   await page.getByRole('button', { name: 'Continuar' }).click();
   await expect(page.getByText('Até logo!')).toBeVisible();
 });

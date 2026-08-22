@@ -272,6 +272,7 @@ export function PublicFlow({
     if (!r.ok) return setError('Produto indisponível.');
     const data = (await r.json()) as Configuration;
     setConfiguration(data);
+    if (item) setCartOpen(false);
     setEditing(item ?? null);
     setVariantId(
       item?.variantId ?? data.variants.find((v) => v.default)?.id ?? '',
