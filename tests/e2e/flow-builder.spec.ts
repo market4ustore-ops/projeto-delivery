@@ -61,6 +61,15 @@ test('creates, publishes and executes a visual journey', async ({
     },
   });
   expect(product.ok()).toBeTruthy();
+  const flow = await request.post(`${apiUrl}/rest/v1/rpc/create_flow`, {
+    headers: authenticatedHeaders,
+    data: {
+      target_location_id: locationId,
+      flow_name: 'Atendimento principal',
+      flow_slug: 'atendimento-principal',
+    },
+  });
+  expect(flow.ok()).toBeTruthy();
 
   await page.goto('http://127.0.0.1:3000');
   await page.getByLabel('E-mail').fill(email);
@@ -70,19 +79,10 @@ test('creates, publishes and executes a visual journey', async ({
     page.getByRole('heading', { name: 'Fundação multi-tenant' }),
   ).toBeVisible();
 
-  await page
-    .getByLabel('Organização ativa')
-    .selectOption(organizationId);
+  await page.getByLabel('Organização ativa').selectOption(organizationId);
   await page.getByRole('button', { name: 'Unidade Centro' }).click();
 
   const journeys = page.getByTestId('journeys-list');
-  await journeys
-    .getByPlaceholder('Nome da jornada')
-    .fill('Atendimento principal');
-  await journeys
-    .getByPlaceholder('endereco-da-jornada')
-    .fill('atendimento-principal');
-  await journeys.getByRole('button', { name: 'Criar' }).click();
   await journeys.getByRole('button', { name: /Atendimento principal/ }).click();
   await expect(page.getByTestId('flow-builder')).toBeVisible();
 
