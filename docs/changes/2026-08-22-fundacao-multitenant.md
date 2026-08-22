@@ -54,9 +54,11 @@ As operações expostas pela UI usam RPCs pequenas. `create_organization` cria a
 
 A primeira execução real no GitHub Actions aplicou a migration corretamente e executou os 15 testes. Treze passaram; os testes de criação autorizada de Location falharam porque `INSERT ... RETURNING` também exigia visibilidade da nova linha pela policy de leitura no mesmo statement. A RPC foi corrigida para gerar o UUID antes do insert e retornar a variável separadamente, preservando a policy de criação e evitando acoplar o comando à policy de leitura.
 
+A execução seguinte, referente ao commit `e5fdf07`, concluiu os jobs `quality` e `rls` com sucesso. O resumo pgTAP confirmou `Files=1, Tests=15`, `All tests successful` e `Result: PASS`. Evidência: [GitHub Actions run 32574903791](https://github.com/market4ustore-ops/projeto-delivery/actions/runs/32574903791).
+
 ## Limitações e débitos adiados
 
-- A migration e os 15 testes pgTAP ainda precisam ser executados contra Supabase local real.
+- A execução local continua dependente de Docker, mas migration e testes pgTAP foram comprovados contra a stack Supabase real no GitHub Actions.
 - Convites, mudança de roles, remoção do último OWNER e gestão de memberships não pertenciam ao escopo.
 - Node 20 ainda executa o projeto, mas o SDK Supabase recomenda migração para Node 22.
 - Catalog, Flow, Cart, Orders e operações de Kitchen não foram iniciados.
