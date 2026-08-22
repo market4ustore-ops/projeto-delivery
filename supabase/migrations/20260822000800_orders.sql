@@ -1,4 +1,6 @@
+alter table public.checkout_sessions alter column status drop default;
 alter table public.checkout_sessions alter column status type text using status::text;
+alter table public.checkout_sessions alter column status set default 'IN_PROGRESS';
 drop type public.checkout_status;
 alter table public.checkout_sessions add constraint checkout_status_check check(status in('IN_PROGRESS','READY','COMPLETED','EXPIRED','CANCELED'));
 alter table public.checkout_sessions add constraint checkout_sessions_location_id_id_key unique(location_id,id);
