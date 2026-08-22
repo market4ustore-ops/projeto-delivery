@@ -1,0 +1,1 @@
+-- Intentionally empty. Development users are created through Supabase Auth.
