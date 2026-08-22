@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(20);
+select plan(21);
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at) values
 ('00000000-0000-0000-0000-000000000081','00000000-0000-0000-0000-000000000000','authenticated','authenticated','orders-a@test.local','',now(),now(),now()),
@@ -38,6 +38,7 @@ select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000082'
 select is((select count(*)::integer from public.orders),0,'foreign tenant cannot read order');
 select throws_ok($$select public.update_order_status('70000000-0000-0000-0000-000000000081',0,'PREPARING',null)$$,'P0001','ORDER_NOT_FOUND','foreign tenant cannot mutate order');
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000081',true);
+select is(jsonb_array_length(public.list_orders('20000000-0000-0000-0000-000000000081')),1,'authorized admin RPC returns location orders');
 select is(public.update_order_status((select id from public.orders),0,'PREPARING',null)->>'revision','1','authorized transition increments revision');
 select throws_ok($$select public.update_order_status((select id from public.orders),0,'READY',null)$$,'P0001','ORDER_REVISION_CONFLICT','stale command is rejected');
 select throws_ok($$select public.update_order_status((select id from public.orders),1,'DELIVERED',null)$$,'P0001','INVALID_ORDER_TRANSITION','invalid transition is rejected');
