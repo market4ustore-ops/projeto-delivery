@@ -55,7 +55,7 @@ export const createFlowGateway = (client: BrowserDatabaseClient) => ({
   list: (locationId: string) =>
     client
       .from('flows')
-      .select('*,flow_versions(*)')
+      .select('*')
       .eq('location_id', locationId)
       .order('name'),
   create: (locationId: string, name: string, slug: string) =>
