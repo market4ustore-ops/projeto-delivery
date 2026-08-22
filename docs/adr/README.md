@@ -9,5 +9,6 @@ Status possíveis: Proposed, Accepted, Superseded, Rejected.
 - [ADR-0005: Autorização por permissions](0005-permission-authorization.md) — Accepted
 - [ADR-0006: Transações, eventos e outbox](0006-events-outbox.md) — Proposed
 - [ADR-0007: Estado e concorrência de pedidos](0007-order-state-machine.md) — Proposed
+- [ADR-0008: Dinheiro em minor units no domínio](0008-money-minor-units.md) — Accepted
 
 ADRs permanecem Proposed até revisão da equipe/produto. Aceitá-los não exige reescrever seu histórico; futuras mudanças criam novo ADR que substitui o anterior.

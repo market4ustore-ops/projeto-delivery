@@ -12,3 +12,4 @@ Cada entrega de implementação deve possuir um registro datado contendo:
 Registros:
 
 - [2026-08-22 — Fundação executável e núcleo multi-tenant](2026-08-22-fundacao-multitenant.md)
+- [2026-08-22 — Catalog](2026-08-22-catalog.md)

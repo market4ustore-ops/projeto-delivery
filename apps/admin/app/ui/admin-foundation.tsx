@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { createBrowserDatabaseClient } from '@delivery/database';
+import { CatalogPanel } from './catalog-panel';
 import {
   createLocationSchema,
   createOrganizationSchema,
@@ -22,6 +23,7 @@ export function AdminFoundation() {
   const [organizations, setOrganizations] = useState<OrganizationRow[]>([]);
   const [selected, setSelected] = useState('');
   const [locations, setLocations] = useState<LocationRow[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState('');
   const [message, setMessage] = useState(
     client
       ? 'Autentique-se para começar.'
@@ -193,7 +195,14 @@ export function AdminFoundation() {
           </form>
           <ul>
             {locations.map((location) => (
-              <li key={location.id}>{location.name}</li>
+              <li key={location.id}>
+                <button
+                  className="secondary"
+                  onClick={() => setSelectedLocation(location.id)}
+                >
+                  {location.name}
+                </button>
+              </li>
             ))}
           </ul>
           {selected && locations.length === 0 && (
@@ -201,6 +210,9 @@ export function AdminFoundation() {
           )}
         </article>
       </div>
+      {client && selectedLocation && (
+        <CatalogPanel client={client} locationId={selectedLocation} />
+      )}
     </section>
   );
 }

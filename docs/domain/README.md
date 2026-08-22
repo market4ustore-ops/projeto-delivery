@@ -17,3 +17,5 @@ Analytics Events e Audit Logs são capacidades transversais com contratos própr
 As relações e aggregates definitivos serão documentados por módulo antes das respectivas migrations.
 
 Implementado neste incremento: [Organizations, Locations e Memberships](organizations.md).
+
+Implementado: [Catalog](catalog.md).

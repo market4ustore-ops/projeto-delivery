@@ -8,6 +8,8 @@ import {
   type Permission,
   type Role,
   type UserId,
+  createCategory as buildCategory,
+  createProduct as buildProduct,
 } from '@delivery/domain';
 
 export type ActorContext = Readonly<{
@@ -82,3 +84,60 @@ export const listLocations = async (
     userId: actor.userId,
   });
 };
+
+export interface CatalogRepository {
+  createCategory(input: ReturnType<typeof buildCategory>): Promise<unknown>;
+  createProduct(
+    input: ReturnType<typeof buildProduct> & { categoryId: string },
+  ): Promise<unknown>;
+  list(locationId: LocationId): Promise<unknown>;
+}
+
+const requireCatalogLocation = (
+  actor: ActorContext,
+  permission: 'catalog.read' | 'catalog.write',
+): LocationId => {
+  authorize(actor, permission);
+  if (!actor.locationId)
+    throw new ForbiddenError('Location context is required');
+  return actor.locationId;
+};
+
+export const createCatalogCategory = (
+  repo: CatalogRepository,
+  actor: ActorContext,
+  input: { name: string; slug: string },
+) =>
+  repo.createCategory(
+    buildCategory({
+      locationId: requireCatalogLocation(actor, 'catalog.write'),
+      ...input,
+    }),
+  );
+
+export const createCatalogProduct = (
+  repo: CatalogRepository,
+  actor: ActorContext,
+  input: {
+    categoryId: string;
+    categoryLocationId: LocationId;
+    name: string;
+    slug: string;
+    basePriceMinor: bigint;
+  },
+) => {
+  const locationId = requireCatalogLocation(actor, 'catalog.write');
+  return repo.createProduct({
+    ...buildProduct({
+      locationId,
+      categoryLocationId: input.categoryLocationId,
+      name: input.name,
+      slug: input.slug,
+      basePriceMinor: input.basePriceMinor,
+    }),
+    categoryId: input.categoryId,
+  });
+};
+
+export const listCatalog = (repo: CatalogRepository, actor: ActorContext) =>
+  repo.list(requireCatalogLocation(actor, 'catalog.read'));
