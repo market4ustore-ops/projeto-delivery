@@ -71,7 +71,7 @@ test('creates, publishes and executes a visual journey', async ({
 
   await page
     .getByLabel('Organização ativa')
-    .selectOption({ label: /Loja Builder/ });
+    .selectOption(organizationId);
   await page.getByRole('button', { name: 'Unidade Centro' }).click();
 
   const journeys = page.getByTestId('journeys-list');
