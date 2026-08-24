@@ -219,6 +219,9 @@ test('creates, publishes and executes a visual journey', async ({
 
   const kitchenPage = await page.context().newPage();
   await kitchenPage.goto('http://127.0.0.1:3002');
+  await kitchenPage.getByLabel('E-mail').fill(email);
+  await kitchenPage.getByLabel('Senha').fill(password);
+  await kitchenPage.getByRole('button', { name: 'Entrar' }).click();
   await kitchenPage.getByLabel('Unidade').selectOption(locationId);
   await expect(kitchenPage.getByText('Pedido #0001')).toBeVisible();
   await kitchenPage.getByRole('button', { name: 'Iniciar preparo' }).click();
