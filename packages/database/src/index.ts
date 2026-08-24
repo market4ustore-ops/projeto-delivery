@@ -128,6 +128,37 @@ export const createOrderGateway = (client: BrowserDatabaseClient) => ({
     }),
 });
 
+export const createKitchenGateway = (client: BrowserDatabaseClient) => ({
+  list: (locationId: string) =>
+    client.rpc('list_kitchen_orders', { target_location_id: locationId }),
+  updateStatus: (
+    orderId: string,
+    expectedRevision: number,
+    status: 'PREPARING' | 'READY',
+  ) =>
+    client.rpc('update_kitchen_order_status', {
+      target_order_id: orderId,
+      expected_revision: expectedRevision,
+      target_status: status,
+    }),
+  subscribe: (locationId: string, onChange: () => void) =>
+    client
+      .channel(`kitchen:${locationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'kitchen_order_signals',
+          filter: `location_id=eq.${locationId}`,
+        },
+        onChange,
+      )
+      .subscribe(),
+  unsubscribe: (channel: ReturnType<BrowserDatabaseClient['channel']>) =>
+    client.removeChannel(channel),
+});
+
 export const createFlowRuntimeGateway = (client: BrowserDatabaseClient) => ({
   findPublished: async (locationId: string, slug: string) =>
     client

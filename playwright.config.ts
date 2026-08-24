@@ -35,5 +35,16 @@ export default defineConfig({
         NEXT_PUBLIC_SUPABASE_ANON_KEY: anonKey,
       },
     },
+    {
+      command: 'pnpm --filter @delivery/kitchen dev',
+      url: 'http://127.0.0.1:3002',
+      reuseExistingServer: true,
+      timeout: 120000,
+      env: {
+        ...process.env,
+        NEXT_PUBLIC_SUPABASE_URL: apiUrl,
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: anonKey,
+      },
+    },
   ],
 });

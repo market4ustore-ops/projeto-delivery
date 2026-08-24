@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   createOrderFromCheckout,
+  listKitchenOrders,
+  markOrderReady,
+  startOrderPreparation,
   updateOrderStatus,
   type OrderCommandPort,
 } from './orders';
@@ -59,4 +62,32 @@ describe('Order application', () => {
         { orderId: 'o', status: 'PREPARING', expectedRevision: 0 },
       ),
     ).rejects.toThrow('CROSS_LOCATION_REFERENCE'));
+  it('lists the authorized kitchen location', async () => {
+    const listKitchen = vi.fn().mockResolvedValue([]);
+    await listKitchenOrders({ listKitchen }, actor, 'l');
+    expect(listKitchen).toHaveBeenCalledWith('l');
+  });
+  it('rejects kitchen listing for another location', () =>
+    expect(() =>
+      listKitchenOrders({ listKitchen: vi.fn() }, actor, 'other'),
+    ).toThrow('CROSS_LOCATION_REFERENCE'));
+  it('starts preparation through the order command', async () =>
+    expect(
+      await startOrderPreparation(port(), actor, {
+        orderId: 'o',
+        expectedRevision: 0,
+      }),
+    ).toMatchObject({ status: 'PREPARING' }));
+  it('marks a preparing order ready', async () => {
+    const preparing = port();
+    preparing.current = vi.fn().mockResolvedValue({
+      status: 'PREPARING',
+      revision: 1,
+      fulfillment: 'DELIVERY',
+      locationId: 'l',
+    });
+    await expect(
+      markOrderReady(preparing, actor, { orderId: 'o', expectedRevision: 1 }),
+    ).resolves.toMatchObject({ status: 'READY', nextRevision: 2 });
+  });
 });

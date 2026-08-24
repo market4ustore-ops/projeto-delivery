@@ -27,6 +27,33 @@ export const createOrderFromCheckout = (
   port: OrderCommandPort,
   input: { checkoutToken: string; idempotencyKey: string },
 ) => port.createFromCheckout(input);
+
+export interface KitchenOrderQueryPort {
+  listKitchen(locationId: string): Promise<unknown>;
+}
+
+export function listKitchenOrders(
+  port: KitchenOrderQueryPort,
+  actor: ActorContext,
+  locationId: string,
+) {
+  authorize(actor, 'orders.read');
+  if (actor.locationId !== locationId)
+    throw new Error('CROSS_LOCATION_REFERENCE');
+  return port.listKitchen(locationId);
+}
+
+export const startOrderPreparation = (
+  port: OrderCommandPort,
+  actor: ActorContext,
+  input: { orderId: string; expectedRevision: number },
+) => updateOrderStatus(port, actor, { ...input, status: 'PREPARING' });
+
+export const markOrderReady = (
+  port: OrderCommandPort,
+  actor: ActorContext,
+  input: { orderId: string; expectedRevision: number },
+) => updateOrderStatus(port, actor, { ...input, status: 'READY' });
 export async function updateOrderStatus(
   port: OrderCommandPort,
   actor: ActorContext,

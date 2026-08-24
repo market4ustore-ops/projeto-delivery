@@ -217,18 +217,21 @@ test('creates, publishes and executes a visual journey', async ({
   await expect(orderDialog.getByText('Pedido confirmado')).toBeVisible();
   await expect(orderDialog.getByText('CONFIRMED')).toBeVisible();
 
-  const adminPage = await page.context().newPage();
-  await adminPage.goto('http://127.0.0.1:3000');
-  await adminPage.getByLabel('Organização ativa').selectOption(organizationId);
-  await adminPage.getByRole('button', { name: 'Unidade Centro' }).click();
-  const ordersPanel = adminPage.getByTestId('orders-panel');
-  await expect(ordersPanel.getByText('Pedido #0001')).toBeVisible();
-  await ordersPanel.getByRole('button', { name: 'Iniciar preparo' }).click();
-  await expect(ordersPanel.getByText(/PREPARING/)).toBeVisible();
-  await adminPage.close();
+  const kitchenPage = await page.context().newPage();
+  await kitchenPage.goto('http://127.0.0.1:3002');
+  await kitchenPage.getByLabel('Unidade').selectOption(locationId);
+  await expect(kitchenPage.getByText('Pedido #0001')).toBeVisible();
+  await kitchenPage.getByRole('button', { name: 'Iniciar preparo' }).click();
 
   await orderDialog.getByRole('button', { name: 'Atualizar status' }).click();
   await expect(orderDialog.getByText('PREPARING')).toBeVisible();
+  await kitchenPage.getByRole('button', { name: 'Marcar como pronto' }).click();
+  await orderDialog.getByRole('button', { name: 'Atualizar status' }).click();
+  await expect(orderDialog.getByText('READY')).toBeVisible();
+  await kitchenPage.reload();
+  await kitchenPage.getByLabel('Unidade').selectOption(locationId);
+  await expect(kitchenPage.getByText('Pedido #0001')).toBeVisible();
+  await kitchenPage.close();
   await orderDialog.getByRole('button', { name: 'Fechar' }).click();
   await page.getByRole('button', { name: 'Continuar' }).click();
   await expect(page.getByText('Até logo!')).toBeVisible();

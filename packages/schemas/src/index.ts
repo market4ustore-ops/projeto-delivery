@@ -315,3 +315,23 @@ export const adminOrdersSchema = z.array(
     ),
   }),
 );
+
+export const kitchenOrderSchema = z.object({
+  id: uuid,
+  displayNumber: z.string(),
+  status: z.enum(['CONFIRMED', 'PREPARING', 'READY']),
+  revision: z.number().int().min(0),
+  confirmedAt: z.string(),
+  scheduledFor: z.string().nullable(),
+  fulfillmentType: z.enum(['DELIVERY', 'PICKUP']),
+  items: z.array(
+    z.object({
+      name: z.string(),
+      variant: z.string().nullable(),
+      quantity: z.number().int().positive(),
+      modifiers: z.array(z.object({ name: z.string() })),
+    }),
+  ),
+});
+export const kitchenOrdersSchema = z.array(kitchenOrderSchema);
+export type KitchenOrder = z.infer<typeof kitchenOrderSchema>;
