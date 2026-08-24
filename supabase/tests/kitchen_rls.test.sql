@@ -17,7 +17,7 @@ insert into public.order_items(id,order_id,product_name_snapshot,unit_price,quan
 
 select ok(not has_function_privilege('anon','public.list_kitchen_orders(uuid)','execute'),'public client cannot open Kitchen');
 select ok(has_function_privilege('authenticated','public.list_kitchen_orders(uuid)','execute'),'authenticated role can reach authorized boundary');
-select results_eq($$select column_name::text from information_schema.columns where table_schema='public' and table_name='kitchen_order_signals' order by column_name$$,array['changed_at','location_id','order_id','revision'],'realtime signal payload is minimal');
+select ok((select count(*)=4 and count(*) filter(where column_name in('changed_at','location_id','order_id','revision'))=4 from information_schema.columns where table_schema='public' and table_name='kitchen_order_signals'),'realtime signal payload is minimal');
 select ok((select count(*)=1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='kitchen_order_signals'),'minimal signal is published to Realtime');
 
 set local role authenticated;
